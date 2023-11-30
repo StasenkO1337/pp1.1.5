@@ -62,10 +62,10 @@ public class UserDaoHibernateImpl implements UserDao {
     public void saveUser(String name, String lastName, byte age) {
         Transaction transaction = null;
         try (Session session = sessionFactory.openSession()) {
-            String sql = String.format("insert into users (name, lastName, age) values('%s', '%s', '%d')",
+            String hql = String.format("insert into users (name, lastName, age) values('%s', '%s', '%d')",
                     name, lastName, age);
             transaction = session.beginTransaction();
-            session.createNativeQuery(sql).executeUpdate();
+            session.createNativeQuery(hql).executeUpdate();
             transaction.commit();
         } catch (HibernateException e) {
             e.printStackTrace();
@@ -79,9 +79,10 @@ public class UserDaoHibernateImpl implements UserDao {
     public void removeUserById(long id) {
         Transaction transaction = null;
         try (Session session = sessionFactory.openSession()) {
-            String sql = String.format("delete from users where id = %d", id);
             transaction = session.beginTransaction();
-            session.createNativeQuery(sql).executeUpdate();
+            String hql = "delete from User where id = :userID";
+            Query query = session.createQuery(hql).setParameter("userID", id);
+            query.executeUpdate();
             transaction.commit();
         } catch (HibernateException e) {
             e.printStackTrace();
@@ -95,7 +96,7 @@ public class UserDaoHibernateImpl implements UserDao {
     public List<User> getAllUsers() {
         List<User> users = null;
         try (Session session = sessionFactory.openSession();) {
-            users = session.createNativeQuery("SELECT * FROM users").addEntity(User.class).list();
+            users = session.createQuery("from User", User.class).list();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -107,11 +108,12 @@ public class UserDaoHibernateImpl implements UserDao {
         Transaction transaction = null;
         try (Session session = sessionFactory.openSession()) {
             transaction = session.beginTransaction();
-            String sql = "TRUNCATE TABLE Users";
-            session.createNativeQuery(sql).executeUpdate();
+            String hql = "TRUNCATE TABLE Users";
+            session.createNativeQuery(hql).executeUpdate();
             transaction.commit();
         } catch (HibernateException e) {
             e.printStackTrace();
+            transaction.rollback();
         }
     }
 }
